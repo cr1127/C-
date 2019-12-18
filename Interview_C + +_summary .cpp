@@ -60,6 +60,25 @@
 
 3.C++中四种cast转换
 
+	1）const_cast 
+
+	用法：const_cast<type_id> (expression)
+
+	用于修改类型的const或volatile属性。除了const或volatile修饰之外，type-id和expression的类型是一样的，一般用于强制消除对象的常量性。
+	它是唯一能做到这一点的 C++ 风格的强制转型，而C不提供消除const的机制。
+
+	常量指针被转化成非常量指针，并且仍然指向原来的对象；常量引用被转换成非常量引用，并且仍然指向原来的对象；常量对象被转换成非常量对象。
+
+	2）static_cast
+
+	用法：static_cast <type_id> (expression)
+
+	
+
+
+
+
+
 	
 
 
