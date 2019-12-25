@@ -233,6 +233,33 @@
   编译器以引用对象的类型作为auto的类型,auto一般会忽略顶层const,同时底层const则会保留下来。
   如果希望推断出的auto类型是一个顶层const，需要明确指出。
 
+  auto 变量必须在定义时初始化，这类似于const关键字。
+
+  定义在一个auto序列的变量必须始终推导成同一类型。
+
+  如果初始化表达式是引用，则去除引用语义。
+  int a = 10;
+  int &b = a;
+  auto c = b;//c的类型为int而非int&（去除引用）
+
+  如果初始化表达式为const或volatile（或者两者兼有），则除去const/volatile语义。
+
+  如果auto关键字带上&号，则不去除const语意。
+
+  初始化表达式为数组时，auto关键字推导类型为指针。
+  int a3[3] = { 1, 2, 3 };
+  auto b3 = a3;
+  cout << typeid(b3).name() << endl;
+  程序将输出 int*
+
+  若表达式为数组且auto带上&，则推导类型为数组类型
+  程序将输出 int[3]
+
+  函数或者模板参数不能被声明为auto
+
+  时刻要注意auto并不是一个真正的类型。
+  auto仅仅是一个占位符，它并不是一个真正的类型，不能使用一些以类型为操作数的操作符，如sizeof或者typeid。
+
 
 20.decltype类型指示符
   
@@ -267,7 +294,7 @@
 
 23.迭代器介绍
 
-  auto   b = v.begin() , e = v.end();  //b表示v的第一个元素，**e表示v尾元素的下一个位置**
+  auto   b = v.begin() , e = v.end();  //b表示v的第一个元素，表示v尾元素的下一个位置 [begin, end)
 
   迭代器类型 const_iterator 和常量指针差不多，能读取但不能修改它所指的元素之。iterator 的对象可读可写。
 
@@ -916,18 +943,18 @@
 
 59.函数参数传递的三种方式(x,*x,&x)
 
-  1)值传递
+  1）值传递
 
   这种传递方式中，实参和形参是两个不同的地址空间，参数传递的实质是将原函数中变量的值，
   复制到被调用函数形参所在的存储空间中，这个形参的地址空间在函数执行完毕后，会被回收掉。
   整个被调用函数对形参的操作，只影响形参对应的地址空间，不影响原来函数中的变量的值，因为这两个不是同一个存储空间。
 
-  2)引用传递
+  2）引用传递
   
   这种传递方式中，形参是引用类型变量，其实是实参的一个别名，在被调用函数中，对引用变量的所有操作等价于对实参的操作。
   整个被调用函数对形参的操作执行完毕后，原先的实参的值也会发生改变。
 
-  3)指针传递
+  3）指针传递
 
   这种传递方式中，实参是变量的地址{swap(&a,&b);}，形参是指针类型的变量。在函数中对指针变量的操作，
   就是对实参(变量地址)所对应的变量的操作。整个被调用函数对形参的操作执行完毕后，原函数中的变量的值将会发生改变。
@@ -955,3 +982,227 @@
 
   swap(a,b);//值传递和引用传递
   swap1(&a,&b);//指针传递
+
+
+60.调试帮助
+
+  1）assert预处理宏
+  
+  assert是一种预处理宏，所谓的预处理宏其实是一个预处理变量，它的行为有点类似于内联函数，assert宏使用一个表达式作为它的条件：
+  assert(expr);
+
+  首先对expr求值，如果表达式为假，assert输出信息并终止程序的执行。如果1表达式为真，assert啥都不做
+
+  2）NDEBUG预处理变量
+
+  如果没有定义NDEBUG, 将执行#ifndef和#endif之间的代码，如果定义了NDEBUG,这些代码将被忽略
+
+  #ifndef NDEBUG
+    cerr << _ _func_ _ //存放当前调试的函数的名字
+    cerr << _ _FILE_ _ //存放文件名的字符串字面值
+    cerr << _ _LINE_ _ //存放当前行号的整型字面值
+    cerr << _ _TIME_ _ //存放文件编译时间的字符串字面值
+    cerr << _ _DATE_ _ //存放文件编译日期的字符串字面值
+  #endif
+
+
+61.顺序容器
+  
+  1）顺序容器的类型：
+
+  vector                 可变大小的数组。支持快速随机访问。在尾部之外的位置插入或者删除元素可能很慢
+
+  deque                  双端队列。支持快速随机访问。在头尾位置插入/删除速度很快
+
+  list                   双向链表。只支持双向顺序访问。在list中任何位置进行插入/删除操作速度都很快
+
+  forward_list           单向链表。只支持单向顺序访问。在链表任何位置进行插入/删除操作速度都很快，没有size操作。
+
+  array                  固定大小数组。支持快速随机访问。不能添加或删除元素
+
+  string                 与vector相似的容器，但专门用于保存字符。随机访问快。在尾部插入/删除速度快
+
+  string和vector将元素保存在连续的内存空间中。由于元素是连续存储的，由元素的下标来计算其地址是非常快速的。适合随机访问，
+  不适合中间位置进行添加和删除元素。
+
+  list 和 forward_list 两个容器的设计目的是令容器任何位置的添加和删除操作都很快速。不支持元素的随机访问。
+
+  deque 与string和vector相似，但是在deque的两端添加和删除元素都很快。
+
+  forward_list和array是新C++标准增加的类型。与内置数组相比，array是一种更安全、更容易使用的数组类型，大小是固定的。
+  forward_list的设计目的是达到与最好的手写的单向链表数据结构相当的性能。因此，forward_list没有size操作。
+
+  确定使用哪种顺序容器
+
+  通常情况下，使用vector是最好的选择
+
+  如果你的程序由很多小的元素，且空间的额外开销很重要，则不要使用list或者forward_list.
+
+  如果程序只有在读取输入时才需要在容器中间位置插入元素，随后需要随机访问元素，则
+  ——首先，确定是否真的需要在容器中间位置添加元素，如果不要，插入到vector尾部，之后调用sort函数。
+  ——如果必须在中间位置插入元素，输入阶段使用list，一旦输入完成，将List中的内容拷贝到一个vector中。
+
+  2）begin 和 end 成员
+
+  auto it1 = a.begin(); // list<string>::iterator
+
+  auto it2 = a.rbegin(); // lis<string>::reverse_iterator
+
+  auto it3 = a.cbegin(); // list<string>::const_iterator
+
+  auto it4 = a.crbegin(); // list<string>::const_reverse_iterator
+
+  3）容器的定义和初始化
+
+  将一个新容器创建为另一个容器的拷贝的方法有两种:可以直接拷贝整个容器，或者（array）拷贝由一个迭代器对指定的元素范围。
+  当将一个容器初始化为另一个容器的拷贝时，两个容器的容器类型和元素类型都必须相同。
+
+  列表初始化 {}
+
+  与顺序容器大小相关的构造函数才接受大小参数，关联函数并不支持。
+  vector<int> ivec(10, -1);
+
+  标准库array具有固定大小
+
+    使用array类型，我们必须同时指定元素类型和大小：array<int, 42> //类型为：保存42个int的数组
+
+    值得注意的是，虽然我们不能对内置数组类型进行拷贝或对象赋值操作，但是array并无此限制。
+
+  4）赋值和swap
+
+  1）swap
+  swap(c1, c2);       //交换c1和c2中的元素，c1和c2必须具有相同的类型。swap通常比从c2向c1拷贝元素快得多。
+  c1.swqp(c2);
+
+  除了array外，交换两个容器内容的操作会保证很快--元素本身并未交换，swap只是交换了两个容器的内部数据结构。
+
+  除了string外，指向容器的迭代器、引用和指针在swap操作之手都不会失效。它们仍指向swap操作之前所指向的那些元素。
+
+  对于array，在操作之后，指针、引用和迭代器所绑定的元素保持不变，但元素值已经与另一个array中对应元素的值进行了交换。
+
+  2）assign操作（仅顺序容器，不适合关联容器和array）
+
+  seq.assign(b, e); //将seq中的元素替换为迭代器b和e所表示的范围中的元素。迭代器b和e不能指向seq中的元素。
+
+  seq.assign(i1);
+
+  seq.assign(n, t); //将seq中的元素替换为n个值为t的元素。
+
+  可以用assign实现将一个vector中的一段char*值赋予一个list中的string。
+
+  5）容器大小操作
+
+  除了一个例外，每个容器类型都由三个与大小相关的操作。成员函数size、empty、max_size。
+  max_size返回一个大于或者等于该类型容器所能容纳的最大元素数的值。
+
+  forward_list支持max_size和empty，但不支持size
+
+  6）关系运算符
+
+  每个容器都有支持相等运算符（=、！=），除了无序关联容器外的所有容器都支持关系运算符（>、>=、<、<=）。
+
+  比较两个容器实际上是进行元素的逐对比较，运算符的工作方式与string的关系运算符类似：
+
+  (1) 如果两个容器具有相同大小且所有元素都两两对应相等，则这两个容器相等，否则两个容器不等。
+
+  (2) 如果两个容器大小不同，但较小容器中每个元素都等于较大容器中的对应元素，则较小容器小于较大容器。
+
+  (3) 如果两个容器都不是另一个容器的前缀子序列，则它们的比较结果取决于第一个不相等的元素的比较结果。
+
+  7）顺序容器操作
+
+  (1) 向顺序容器添加元素
+
+    这些操作会改变容器大小，array不支持这些操作。
+
+    forward_list 不支持push_back 和 emplace_back。
+
+    vector 和 string 不支持 putsh_front 和 emplace_front。
+
+    # 当调用push或insert成员函数时，我们将元素类型的对象传递给它们，这些对象被拷贝到容器中。
+    # 而当我们调用一个emplace成员函数时，则是将参数传递给元素类型的构造函数。
+    # 传递给emplace函数的参数必须于元素类型的构造函数匹配。
+    # emplace相关函数可以减少内存拷贝和移动。
+
+    c.putsh_back(t)                 //在c的尾部创建一个值为t或者由args创建的元素，返回void
+    c.emplace_back(args)
+
+    c.putsh_front(t)
+    c.empace_front(args)
+
+    c.insert(p, t)
+    c.emplace(p, args)
+
+    c.insert(p, b, e)
+
+    c.insert(p, il)
+
+    除了array和forward_list之外，每个顺序容器（包括string）都支持push_back。
+
+    forward_list、list和deque容器还支持push_front。
+    
+    vector、list、deque和string都支持insert成员，forward_list提供了特殊版本的insert成员。
+
+    # 将元素插入到vector、deque和string中任何位置都是合法的。然而，这样做可能很耗时。
+
+    使用insert的返回值
+    list<string> lst;
+    auto iter = lst.begin();
+    while(cin >> word) {
+      iter = lst.insert(iter, word);
+    }
+    // insert返回的迭代器恰好指向这个新元素。
+    
+    访问容器的元素之前要确定非空
+
+    包括array在内的每个顺序都有一个front成员函数，而除了forward_list之外的所有顺序容器都由一个back成员函数。这两个操作分别返回首元素和尾元素的引用。
+
+    at和下标操作只适用于string、vector、deque 和 array。
+    c[n] 返回c中下标为n的元素的引用。
+    c.at(n) 返回下标为n的元素的引用。如果下标越界，则抛出out_of__range异常。
+
+    访问成员函数返回的都是引用。如果我们使用auto变量来保存这些函数的返回值，并且希望使用此变量来改变元素的值，必须记得将变量定义为引用变量。
+
+  (2) 删除元素
+
+    forward_list有特殊版本的erase
+
+    forward_list 不支持 pop_back; vector 和string 不支持pop_front.
+
+    c.pop_back()
+
+    c.pop_front()
+
+    c.erase(p)          //删除迭代器p所有指定的元素，返回一个指向被删元素之后元素的迭代器。
+
+    c.erase(b, e)       //删除迭代器b和e所指定的范围内的元素。返回一个指向最后一个被删元素之后的迭代器。
+
+    c.clear()           //删除c中的所有元素。
+
+  
+
+
+62.size_t 和 size_type 区别
+
+  1）size_t是全局定义的类型；size_type是STL类中定义的类型属性，用以保存任意string和vector类对象的长度
+
+  2）string::size_type 制类型一般就是unsigned int, 但是不同机器环境长度可能不同 win32 和win64上长度差别;size_type一般也是unsigned int
+
+  3）使用的时候可以参考：
+   string::size_type  a =123;
+   vector<int>size_type b=234;
+   size_t b=456;
+
+  4）size_t 使用的时候头文件需要 <cstddef> ；size_type 使用的时候需要<string>或者<vector>
+
+  5）sizeof(string::size_type) 
+    sizeof(vector<bool>::size_type) 
+    sizeof(vector<char>::size_type)  
+    sizeof(size_t) 
+    上述长度均相等，长度为win32:4 win64:8
+
+  6）二者联系：在用下标访问元素时，vector使用vector::size_type作为下标类型，而数组下标的正确类型则是size_t
+
+  size_t j     如果j = 0, --j;会出错
+
+
